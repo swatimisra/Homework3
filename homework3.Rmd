@@ -1,0 +1,120 @@
+---
+title: "Homework 3"
+author: "Swati Misra (SM83264)"
+date: "2024-02-02"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(mosaic)
+library(tibble)
+library(knitr)
+
+covid <- read.csv("covid.csv")
+creatinine <- read.csv("creatinine.csv")
+market <- read.csv("marketmodel.csv")
+milk <- read.csv("milk.csv")
+```
+
+Link to GitHub Repo: 
+
+# Problem 1
+
+### Part A
+```{r, echo = FALSE}
+model_crt = lm(creatclear ~ age, data=creatinine)
+```
+
+y = 148 - 0.62x
+
+Using the model above, one can determine the creatinine clearance rate for a 55 year old to be 148 - 0.62(55) which is 113.9. 
+
+### Part B
+
+With every one year change in age, there is a `r coef(model_crt)[2]` mL/minute decrease in creatinine clearance rate. This is determined using the slope value in the above regression model which represents the rate of changeof the creatinine clearance rate with age. 
+
+### Part C
+
+The 40 year old with a rate of 135 is has a creatinine rate healthier/higher for their age. This was determined by inputting both of the ages into the regression model and calculating that the predicted creatinine clearance rate for 40 year olds and 60 year olds is 123.2 and 110.8 respectively. The rate of 135 has a greater difference from it's predicted rate than 112. 
+
+The equations used:
+predicted rate = 148 - 0.62(age)
+
+40 year old: 
+predicted rate = 148 - 0.62(40) = 123.3
+
+60 year old:
+predicted rate = 148 - 0.62(60) = 110.8
+
+\vspace{18em} <!-- to add space between sections -->
+
+# Problem 2
+
+The beta of a stock measures the systematic risk of that stock. Beta is the percentage change in an asset's return given a 1% change in the market portfolio. Firms that have a beta higher than 1 have more systematic risk than the average firm. The average risk of a stock is 1.0. This means that if a stock has a beta of 1.46, as the market goes up, it goes up even more than the remainder of the market. On the other hand, when the market goes down, this stock goes down much more than the rest of the market. If a firm has a beta of 0, that firm has no systematic risk at all and does not react to market wide movements whatsoever. Additionally, it is also possible to have a negative beta, meaning there is a "negative risk premium" which means that the return of the firm is less than the risk free rate. Though this seems unreasonable to invest in, many investors see firms with negative betas as an insurance policy as they do not crash as much as other firms when the market goes down. This is calculated by dividing the product of the covariance of the security and market returns by the variance of the market returns over the specified period. As seen in the included model, the beta (slope term) is very important to finance professionals. It depicts how a stock is going to fair in market ups and downs. When used in a regression model like this, it can predict the behavior of a stock in the future and how risky it may be to invest in. 
+
+
+```{r, echo = FALSE}
+lm_AAPL <- lm(AAPL ~ SPY, data = market)
+
+lm_GOOG <- lm(GOOG ~ SPY, data = market)
+
+lm_MRK <- lm(MRK ~ SPY, data = market)
+
+lm_JNJ <- lm(JNJ ~ SPY, data = market)
+
+lm_WMT <- lm(WMT ~ SPY, data = market)
+
+lm_TGT <- lm(TGT ~ SPY, data = market)
+
+my_table <- tibble(
+  Ticker = c("AAPL",  "GOOG",  "MRK",  "JNJ", "WMT","TGT" ),
+
+  Intercept = c(round(coef(lm_AAPL)[1], 4), round(coef(lm_GOOG)[1],4), round(coef(lm_MRK)[1],4), round(coef(lm_JNJ)[1], 4), round(coef(lm_WMT)[1],4), round(coef(lm_TGT)[1],4)),
+
+  Slope = c(round(coef(lm_AAPL)[2], 4), round(coef(lm_GOOG)[2],4),round(coef(lm_MRK)[2],4), round(coef(lm_JNJ)[2], 4), round(coef(lm_WMT)[2],4),round(coef(lm_TGT)[2],4)),
+
+  RSquared = c(round(rsquared(lm_AAPL),4),round(rsquared(lm_GOOG),4),round(rsquared(lm_MRK), 4),round(rsquared(lm_JNJ), 4), round(rsquared(lm_WMT), 4),round(rsquared(lm_TGT),4))
+
+)
+
+kable(my_table)
+
+```
+In this table, we can see the returns of 6 different stocks regressed on the return of S&P 500. The intercept, slope, and R squared value of the regression line are shown in this table. The R squared value measures how large the predictable component of variation is, relative to total variation. The larger the R-squared value is, the more variability that is explained by the model. 
+
+The stock with the lowest systematic risk is WMT. The stock with the highest systematic risk is AAPL. 
+
+\vspace{18em} <!-- to add space between sections -->
+
+# Problem 3
+```{r, echo = FALSE}
+italy <- covid[covid$country == "Italy",]
+spain <- covid[covid$country == "Spain",]
+lm_italy = lm(log(deaths) ~ days_since_first_death, data=italy)
+lm_spain = lm(log(deaths) ~ days_since_first_death, data=spain)
+
+ggplot() + 
+  geom_line(data = italy, aes(x = days_since_first_death, y = deaths, color = "Italy")) + geom_line(data = spain, aes(x = days_since_first_death, y = deaths, color = "Spain")) + labs( title = "COVID Deaths Over Time", x = "Days Since First Death", y = "Deaths") + scale_color_manual(values = c("Italy" = "red", "Spain" = "blue"))
+
+```
+
+Italy:
+Growth Rate: `r round(coef(lm_italy)[2],3)`
+Doubling time: `r round((log(2) / coef(lm_italy)[2]))` days
+
+Spain
+Growth Rate: `r round(coef(lm_spain)[2],3)`
+Doubling time: `r round((log(2) / coef(lm_spain)[2]))` days
+
+# Problem 4
+```{r, echo = FALSE}
+lm_milk = lm(log(sales) ~ log(price), data=milk)
+```
+
+The estimated price elasticity of demand is `r round(coef(lm_milk)[2],2)`. In order to find this, I fit a linear regression on the log of the sales and price variables. I did this because the scatter plot for the price and sales did not seem to have a linear relationship, but once I compared the log of both these variables, the linear relationship was more prevalent. This demonstrated that we need a power-law model for this data. With every 1% increase in milk price, there is a 1.62% decrease in milk sales.
+
+
+
+
